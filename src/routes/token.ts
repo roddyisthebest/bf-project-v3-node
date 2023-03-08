@@ -6,7 +6,9 @@ const router = express.Router();
 router.post('/refresh', (req: any, res: Response, next: NextFunction) => {
   const { refreshToken } = req.body;
   if (!refreshToken) {
-    return res.status(409).json({ code: 'Conflict', msg: '토큰이 없습니다.' });
+    return res
+      .status(409)
+      .json({ code: 'Conflict', message: '토큰이 없습니다.' });
   }
 
   jwt.verify(
@@ -33,7 +35,7 @@ router.post('/refresh', (req: any, res: Response, next: NextFunction) => {
       } else {
         const accessToken = token.generateAccessToken(user.id);
         return res.status(200).send({
-          msg: '토큰이 성공적으로 갱신되었습니다!',
+          message: '토큰이 성공적으로 갱신되었습니다!',
           payload: { accessToken },
           code: 200,
         });

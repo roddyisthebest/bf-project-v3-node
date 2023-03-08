@@ -21,7 +21,7 @@ const authToken = async (req: any, res: Response, next: NextFunction) => {
           });
         } else {
           return res.status(400).json({
-            msg: '에러입니다!',
+            message: '에러입니다!',
             code: 'Bad Request',
           });
         }

@@ -44,7 +44,7 @@ router.post(
       let refreshToken = token.generateRefreshToken(user.id);
 
       return res.status(201).json({
-        msg: `${user.name}님 성공적으로 회원등록 되었습니다.`,
+        message: `${user.name}님 성공적으로 회원등록 되었습니다.`,
         payload: {
           token: {
             accessToken,
@@ -77,7 +77,7 @@ router.post(
           let accessToken = token.generateAccessToken(exUser.id);
           let refreshToken = token.generateRefreshToken(exUser.id);
           return res.status(200).json({
-            msg: `${exUser.name}님 안녕하세요!`,
+            message: `${exUser.name}님 안녕하세요!`,
             payload: {
               token: {
                 accessToken,
@@ -92,13 +92,13 @@ router.post(
         } else {
           return res.status(400).json({
             code: 'Bad Request',
-            msg: '올바르지 않은 비밀번호입니다.',
+            message: '올바르지 않은 비밀번호입니다.',
           });
         }
       } else {
         return res.status(400).json({
           code: 'Bad Request',
-          msg: '가입되지 않은 회원입니다.',
+          message: '가입되지 않은 회원입니다.',
         });
       }
     } catch (e) {
@@ -116,7 +116,7 @@ router.patch(
     try {
       await User.update({ name, img }, { where: { id: req.id } });
       res.status(200).json({
-        msg: '성공적으로 회원님의 정보가 바뀌었습니다.',
+        message: '성공적으로 회원님의 정보가 바뀌었습니다.',
         code: 'OK',
       });
     } catch (e) {
@@ -143,7 +143,7 @@ router.put(
         { where: { UserId: req.id, TeamId: teamId } }
       );
       return res.json({
-        msg: '서비스 사용설정이 완료되었습니다!',
+        message: '서비스 사용설정이 완료되었습니다!',
         code: 'OK',
       });
     } catch (e) {
@@ -177,7 +177,7 @@ router.patch(
 
       return res.status(200).json({
         code: 'OK',
-        msg: `(${date.thisWeekendToString()}) 유저의 벌금 제출값이 성공적으로 변경되었습니다.`,
+        message: `(${date.thisWeekendToString()}) 유저의 벌금 제출값이 성공적으로 변경되었습니다.`,
       });
     } catch (e) {
       next(e);
@@ -219,16 +219,16 @@ router.get(
         });
 
         if (penaltys.length === 5) {
-          return res.json({
+          return res.status(200).json({
             code: 'OK',
             payload: penaltys,
-            msg: `회원번호 ${req.id} 유저의 트윗 목록입니다.`,
+            message: `회원번호 ${req.id} 유저의 트윗 목록입니다.`,
           });
         } else {
-          return res.json({
+          return res.status(200).json({
             code: 'OK-LAST',
             payload: penaltys,
-            msg: `회원번호 ${req.id} 유저의 마지막 페이지 트윗 목록입니다.`,
+            message: `회원번호 ${req.id} 유저의 마지막 페이지 트윗 목록입니다.`,
           });
         }
       } catch (e) {
@@ -271,13 +271,13 @@ router.get(
         return res.json({
           code: 'OK',
           payload: tweets,
-          msg: `회원번호 ${req.id} 유저의 트윗 목록입니다.`,
+          message: `회원번호 ${req.id} 유저의 트윗 목록입니다.`,
         });
       } else {
         return res.json({
           code: 'OK-LAST',
           payload: tweets,
-          msg: `회원번호 ${req.id} 유저의 마지막 페이지 트윗 목록입니다.`,
+          message: `회원번호 ${req.id} 유저의 마지막 페이지 트윗 목록입니다.`,
         });
       }
     } catch (e) {
@@ -309,13 +309,13 @@ router.get(
         return res.json({
           code: 'OK',
           payload: prays,
-          msg: `회원번호 ${req.id} 유저의 기도제목 목록입니다.`,
+          message: `회원번호 ${req.id} 유저의 기도제목 목록입니다.`,
         });
       } else {
         return res.json({
           code: 'OK-LAST',
           payload: prays,
-          msg: `회원번호 ${req.id} 유저의 마지막 페이지 기도제목 목록입니다.`,
+          message: `회원번호 ${req.id} 유저의 마지막 페이지 기도제목 목록입니다.`,
         });
       }
     } catch (e) {
