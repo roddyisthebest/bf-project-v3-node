@@ -11,7 +11,8 @@ const authToken = async (req: any, res: Response, next: NextFunction) => {
         if (error.name === 'TokenExpiredError') {
           return res.status(401).json({
             code: 'Expired',
-            message: 'accessToken이 만료되었습니다. 다시 로그인해주세요.',
+            message:
+              'accessToken이 만료되었습니다. refreshToken으로 accessToken을 갱신해주세요.',
           });
         } else if (error.name === 'JsonWebTokenError') {
           return res.status(401).json({

@@ -170,14 +170,14 @@ router.patch(
           where: {
             UserId: req.id,
             TeamId: teamId,
-            weekend: date.thisWeekend(),
+            weekend: date.thisWeekendToString(),
           },
         }
       );
 
       return res.status(200).json({
         code: 'OK',
-        msg: `(${date.thisWeekend()}) 유저의 벌금 제출값이 성공적으로 변경되었습니다.`,
+        msg: `(${date.thisWeekendToString()}) 유저의 벌금 제출값이 성공적으로 변경되었습니다.`,
       });
     } catch (e) {
       next(e);
