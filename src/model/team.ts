@@ -6,13 +6,9 @@ import { Tweet } from './tweet';
 import { User } from './user';
 export interface TeamsAttributes {
   id: number;
-  oauth: string;
-  userId: string;
   name: string;
   img: string;
-  password: string | null;
-  payed: boolean;
-  phoneToken: string;
+  bossId: string | null;
   createdAt?: Date;
   updatedAt?: Date;
   [x: string]: any;

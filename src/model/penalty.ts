@@ -21,6 +21,12 @@ const penaltyInit = (sequelize: Sequelize) =>
         allowNull: false,
         unique: false,
       },
+      payed: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+        unique: false,
+        defaultValue: true,
+      },
     },
     {
       sequelize,

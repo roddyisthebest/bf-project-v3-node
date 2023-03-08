@@ -8,11 +8,10 @@ import { Tweet } from './tweet';
 export interface UsersAttributes {
   id: number;
   oauth: string;
-  userId: string;
+  uid: string;
   name: string;
   img: string;
   password: string | null;
-  payed: boolean;
   phoneToken: string;
   createdAt?: Date;
   updatedAt?: Date;
@@ -41,10 +40,10 @@ const userInit = (sequelize: Sequelize) => {
         autoIncrement: false,
         primaryKey: true,
       },
-      userId: {
+      uid: {
         type: DataTypes.STRING,
-        allowNull: true,
-        unique: false,
+        allowNull: false,
+        unique: true,
       },
       oauth: {
         type: DataTypes.STRING,
@@ -65,12 +64,6 @@ const userInit = (sequelize: Sequelize) => {
         type: DataTypes.STRING,
         allowNull: true,
         unique: false,
-      },
-      payed: {
-        type: DataTypes.BOOLEAN,
-        allowNull: true,
-        unique: false,
-        defaultValue: false,
       },
       phoneToken: {
         type: DataTypes.STRING,
