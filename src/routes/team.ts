@@ -76,7 +76,7 @@ router.put('/', async (req: any, res: Response, next: NextFunction) => {
       });
     }
 
-    await Team.update({ name, introducing }, { where: { id: teamId } });
+    await Team.update({ name, introducing }, { where: { id } });
     return res.status(200).send({
       code: 'OK',
       msg: '팀의 정보가 성공적으로 변경되었습니다.',
@@ -109,3 +109,5 @@ router.delete('/:id', async (req: any, res: Response, next: NextFunction) => {
     next(e);
   }
 });
+
+export default router;
