@@ -41,6 +41,11 @@ const teamInit = (sequelize: Sequelize) => {
         allowNull: false,
         unique: false,
       },
+      introducing: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        unique: false,
+      },
       img: {
         type: DataTypes.STRING,
         allowNull: false,
