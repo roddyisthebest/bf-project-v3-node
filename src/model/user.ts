@@ -37,7 +37,7 @@ const userInit = (sequelize: Sequelize) => {
     {
       id: {
         type: DataTypes.INTEGER.UNSIGNED,
-        autoIncrement: false,
+        autoIncrement: true,
         primaryKey: true,
       },
       uid: {

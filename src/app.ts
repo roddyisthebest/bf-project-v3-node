@@ -18,7 +18,7 @@ const app = express();
 
 dotenv.config();
 
-app.use(cors());
+app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/src/img', express.static(path.join(__dirname, 'uploads')));
@@ -29,16 +29,30 @@ sequelize
     console.log(err);
   });
 
-app.get('/', (req: any, res: Response, next: NextFunction) => {
-  return res.status(200).json({ message: 'test' });
-});
-
 app.use('/user', userRoutes);
 app.use('/pray', authToken, authUser, prayRoutes);
 app.use('/penalty', authToken, authUser, penaltyRoutes);
 app.use('/tweet', authToken, authUser, tweetRoutes);
 app.use('/token', tokenRoutes);
 app.use('/team', teamRoutes);
+
+app.get('/', (req: any, res: Response, next: NextFunction) => {
+  return res.status(200).json({ message: 'test' });
+});
+
+app.use((req, res, next) => {
+  const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
+  console.log('읎다!');
+  next(error);
+});
+
+app.use((err: Error, req: any, res: Response, next: NextFunction) => {
+  res.locals.message = err.message;
+  res.locals.error = process.env.NODE_ENV !== 'prod' ? err : {};
+  res.status(500);
+  console.log('error');
+  res.json({ err });
+});
 
 if (process.env.NODE_ENV === 'production') {
   //

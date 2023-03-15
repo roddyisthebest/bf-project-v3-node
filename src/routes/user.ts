@@ -107,6 +107,61 @@ router.post(
   }
 );
 
+router.post(
+  '/login/sns',
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { uid, name, img, oauth } = req.body;
+    try {
+      const exUser: any = await User.findOne({
+        where: { uid, oauth },
+      });
+      if (exUser) {
+        const accessToken = token.generateAccessToken(exUser.id);
+        const refreshToken = token.generateRefreshToken(exUser.id);
+
+        return res.status(200).json({
+          message: `${exUser.name}님 안녕하세요!`,
+          payload: {
+            token: {
+              accessToken,
+              refreshToken,
+            },
+            userInfo: {
+              ...exUser.dataValues,
+            },
+          },
+          code: 'OK',
+        });
+      }
+      const newUser = await User.create({
+        uid,
+        name,
+        img: img
+          ? img
+          : `https://s.gravatar.com/avatar/${md5(uid)}?s=32&d=retro`,
+        oauth,
+      });
+      const accessToken = token.generateAccessToken(newUser.id);
+      const refreshToken = token.generateRefreshToken(newUser.id);
+      return res.status(201).json({
+        message: `${newUser.name}님 ${oauth}를 통한 가입을 축하합니다.`,
+        payload: {
+          token: {
+            accessToken,
+            refreshToken,
+          },
+          userInfo: {
+            ...newUser.dataValues,
+          },
+        },
+        code: 'Created',
+      });
+    } catch (e) {
+      console.log(e);
+    }
+  }
+);
+
 router.patch(
   '/',
   authToken,
