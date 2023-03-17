@@ -34,7 +34,7 @@ app.use('/pray', authToken, authUser, prayRoutes);
 app.use('/penalty', authToken, authUser, penaltyRoutes);
 app.use('/tweet', authToken, authUser, tweetRoutes);
 app.use('/token', tokenRoutes);
-app.use('/team', teamRoutes);
+app.use('/team', authToken, teamRoutes);
 
 app.get('/', (req: any, res: Response, next: NextFunction) => {
   return res.status(200).json({ message: 'test' });

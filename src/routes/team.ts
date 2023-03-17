@@ -26,25 +26,33 @@ const upload = multer({
 });
 
 router.post(
-  '/',
+  '',
   upload.single('img'),
   async (req: any, res: Response, next: NextFunction) => {
+    console.log('what!');
+
     try {
       const { name, introducing } = req.body;
-      const img = req.file?.path || ('' as string);
 
+      const img = req.file?.path || ('' as string);
+      console.log(name, introducing, img);
       if (!img) {
         return res
           .status(400)
           .json({ message: '잘못된 형식의 data입니다.', code: 'Bad Request' });
       }
 
-      await Team.create({
+      const team = await Team.create({
+        UserId: req.id,
         bossId: req.id,
         name,
         img: img && img.replace('uploads', 'img'),
         introducing,
       });
+
+      const user: any = await User.findOne({ where: { id: req.id } });
+
+      await user.addTeam(parseInt(team.id, 10));
 
       return res.status(201).json({
         code: 'Created',
@@ -57,12 +65,13 @@ router.post(
         },
       });
     } catch (e) {
+      console.log(e);
       next(e);
     }
   }
 );
 
-router.put('/', async (req: any, res: Response, next: NextFunction) => {
+router.put('', async (req: any, res: Response, next: NextFunction) => {
   const { name, introducing, id } = req.body;
 
   try {

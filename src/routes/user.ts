@@ -11,6 +11,7 @@ import { Penalty } from '../model/penalty';
 import date from '../util/date';
 import { Tweet } from '../model/tweet';
 import { Pray } from '../model/pray';
+import { Team } from '../model/team';
 const router = express.Router();
 
 router.post(
@@ -40,8 +41,8 @@ router.post(
         oauth: 'local',
       });
 
-      let accessToken = token.generateAccessToken(user.id);
-      let refreshToken = token.generateRefreshToken(user.id);
+      let accessToken = token.generateAccessToken(user.id, user.name);
+      let refreshToken = token.generateRefreshToken(user.id, user.name);
 
       return res.status(201).json({
         message: `${user.name}님 성공적으로 회원등록 되었습니다.`,
@@ -63,7 +64,7 @@ router.post(
 );
 
 router.post(
-  'signin',
+  '/signin',
   async (req: Request, res: Response, next: NextFunction) => {
     const { uid, password } = req.body;
     try {
@@ -74,8 +75,8 @@ router.post(
         const result = await bcrypt.compare(password, exUser.password);
         if (result) {
           exUser.dataValues.password = null;
-          let accessToken = token.generateAccessToken(exUser.id);
-          let refreshToken = token.generateRefreshToken(exUser.id);
+          let accessToken = token.generateAccessToken(exUser.id, exUser.name);
+          let refreshToken = token.generateRefreshToken(exUser.id, exUser.name);
           return res.status(200).json({
             message: `${exUser.name}님 안녕하세요!`,
             payload: {
@@ -116,8 +117,9 @@ router.post(
         where: { uid, oauth },
       });
       if (exUser) {
-        const accessToken = token.generateAccessToken(exUser.id);
-        const refreshToken = token.generateRefreshToken(exUser.id);
+        console.log(exUser.id);
+        const accessToken = token.generateAccessToken(exUser.id, exUser.name);
+        const refreshToken = token.generateRefreshToken(exUser.id, exUser.name);
 
         return res.status(200).json({
           message: `${exUser.name}님 안녕하세요!`,
@@ -141,8 +143,8 @@ router.post(
           : `https://s.gravatar.com/avatar/${md5(uid)}?s=32&d=retro`,
         oauth,
       });
-      const accessToken = token.generateAccessToken(newUser.id);
-      const refreshToken = token.generateRefreshToken(newUser.id);
+      const accessToken = token.generateAccessToken(newUser.id, newUser.name);
+      const refreshToken = token.generateRefreshToken(newUser.id, newUser.name);
       return res.status(201).json({
         message: `${newUser.name}님 ${oauth}를 통한 가입을 축하합니다.`,
         payload: {
@@ -373,6 +375,32 @@ router.get(
           message: `회원번호 ${req.id} 유저의 마지막 페이지 기도제목 목록입니다.`,
         });
       }
+    } catch (e) {
+      console.error(e);
+      next(e);
+    }
+  }
+);
+
+router.get(
+  '/myTeams',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const myTeams: any = await User.findOne({
+        where: { id: req.id },
+        include: [
+          {
+            model: Team,
+          },
+        ],
+      });
+
+      return res.status(200).json({
+        code: 'OK',
+        payload: myTeams,
+        message: `가입된 팀 리스트입니다.`,
+      });
     } catch (e) {
       console.error(e);
       next(e);
