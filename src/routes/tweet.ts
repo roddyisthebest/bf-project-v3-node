@@ -33,7 +33,7 @@ const upload = multer({
 });
 
 router.post(
-  '/',
+  '',
   upload.single('img'),
   async (req: any, res: Response, next: NextFunction) => {
     const { teamId } = req.body;
@@ -65,6 +65,7 @@ router.post(
       if (!user.Service.tweet) {
         fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
         if (error) {
+          console.log('서비스엄슴.');
           return res
             .status(500)
             .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });

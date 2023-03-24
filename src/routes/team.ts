@@ -50,6 +50,10 @@ router.post(
         introducing,
       });
 
+      await Service.create({
+        TeamId: team.id,
+      });
+
       const user: any = await User.findOne({ where: { id: req.id } });
 
       await user.addTeam(parseInt(team.id, 10));

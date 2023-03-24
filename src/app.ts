@@ -32,7 +32,7 @@ sequelize
 app.use('/user', userRoutes);
 app.use('/pray', authToken, authUser, prayRoutes);
 app.use('/penalty', authToken, authUser, penaltyRoutes);
-app.use('/tweet', authToken, authUser, tweetRoutes);
+app.use('/tweet', authToken, tweetRoutes);
 app.use('/token', tokenRoutes);
 app.use('/team', authToken, teamRoutes);
 
