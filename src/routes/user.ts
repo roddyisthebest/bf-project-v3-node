@@ -12,6 +12,8 @@ import date from '../util/date';
 import { Tweet } from '../model/tweet';
 import { Pray } from '../model/pray';
 import { Team } from '../model/team';
+import sanitize from 'sanitize-html';
+import { Invitation } from '../model/invitation';
 const router = express.Router();
 
 router.post(
@@ -165,9 +167,8 @@ router.post(
 );
 
 router.patch(
-  '/',
+  '',
   authToken,
-  authUser,
   async (req: any, res: Response, next: NextFunction) => {
     const { name, img } = req.body;
     try {
@@ -182,10 +183,36 @@ router.patch(
   }
 );
 
-router.put(
+router.get(
+  '/service/team/:teamId',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    const { teamId } = req.params;
+
+    try {
+      const alreadyService = await Service.findOne({
+        where: { TeamId: teamId, UserId: req.id },
+      });
+      if (alreadyService) {
+        return res.status(200).json({
+          code: 'OK',
+          message: `동아리 번호${teamId}의 서비스 사용 설정값 입니다.`,
+          payload: alreadyService,
+        });
+      }
+      return res.status(404).json({
+        code: 'Not found',
+        message: `동아리 번호${teamId}의 서비스 사용 설정값이 없습니다.`,
+      });
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+router.post(
   '/service',
   authToken,
-  authUser,
   async (req: any, res: Response, next: NextFunction) => {
     const {
       tweet,
@@ -195,12 +222,26 @@ router.put(
     }: { tweet: boolean; pray: boolean; penalty: boolean; teamId: number } =
       req.body;
     try {
-      await Service.update(
-        { tweet, pray, penalty },
-        { where: { UserId: req.id, TeamId: teamId } }
-      );
+      const alreadyService = await Service.findOne({
+        where: { TeamId: teamId, UserId: req.id },
+      });
+
+      if (alreadyService) {
+        return res.status(409).json({
+          code: 'Conflict',
+          message: '이미 서비스 사용 설정이 초기화 되었습니다.',
+        });
+      }
+
+      await Service.create({
+        tweet,
+        pray,
+        penalty,
+        TeamId: teamId,
+        UserId: req.id,
+      });
       return res.json({
-        message: '서비스 사용설정이 완료되었습니다!',
+        message: `동아리 번호${teamId}의 서비스 사용 설정이 초기화 되었습니다.`,
         code: 'OK',
       });
     } catch (e) {
@@ -213,20 +254,13 @@ router.patch(
   '/paycheck',
   authToken,
   async (req: any, res: Response, next: NextFunction) => {
-    const { teamId, payed }: { teamId: number; payed: boolean } = req.body;
+    const { id, payed }: { id: number; payed: boolean } = req.body;
     try {
-      // const user = await User.findAll({
-      //   include: {
-      //     model: Team,
-      //     as: 'teams',
-      //   },
-      // });
       await Penalty.update(
         { payed },
         {
           where: {
-            UserId: req.id,
-            TeamId: teamId,
+            id,
             weekend: date.thisWeekendToString(),
           },
         }
@@ -275,7 +309,7 @@ router.get(
           order: [['id', 'DESC']],
         });
 
-        if (penaltys.length === 5) {
+        if (penaltys.length === 10) {
           return res.status(200).json({
             code: 'OK',
             payload: penaltys,
@@ -283,7 +317,7 @@ router.get(
           });
         } else {
           return res.status(200).json({
-            code: 'OK-LAST',
+            code: 'OK:LAST',
             payload: penaltys,
             message: `회원번호 ${req.id} 유저의 마지막 페이지 트윗 목록입니다.`,
           });
@@ -308,9 +342,10 @@ router.get(
 
     try {
       const where = { id: {}, UserId: req.id, TeamId: teamId };
-      if (lastId && lastId !== -1) {
+      if (lastId !== -1) {
         where.id = { [Op.lt]: lastId };
       }
+      console.log(where);
 
       const tweets = await Tweet.findAll({
         where: lastId === -1 ? { UserId: req.id, TeamId: teamId } : where,
@@ -321,7 +356,7 @@ router.get(
             attributes: ['id', 'img', 'name', 'oauth', 'createdAt'],
           },
         ],
-        order: [['createdAt', 'DESC']],
+        order: [['id', 'DESC']],
       });
 
       if (tweets.length === 5) {
@@ -332,7 +367,7 @@ router.get(
         });
       } else {
         return res.json({
-          code: 'OK-LAST',
+          code: 'OK:LAST',
           payload: tweets,
           message: `회원번호 ${req.id} 유저의 마지막 페이지 트윗 목록입니다.`,
         });
@@ -359,10 +394,10 @@ router.get(
       const prays = await Pray.findAll({
         where: lastId === -1 ? { UserId: req.id, TeamId: teamId } : where,
         limit: 15,
-        order: [['createdAt', 'DESC']],
+        order: [['id', 'DESC']],
       });
 
-      if (prays.length === 5) {
+      if (prays.length === 15) {
         return res.json({
           code: 'OK',
           payload: prays,
@@ -370,7 +405,7 @@ router.get(
         });
       } else {
         return res.json({
-          code: 'OK-LAST',
+          code: 'OK:LAST',
           payload: prays,
           message: `회원번호 ${req.id} 유저의 마지막 페이지 기도제목 목록입니다.`,
         });
@@ -383,26 +418,166 @@ router.get(
 );
 
 router.get(
-  '/myTeams',
+  '/team/thumbnail',
   authToken,
   async (req: any, res: Response, next: NextFunction) => {
     try {
-      const myTeams: any = await User.findOne({
-        where: { id: req.id },
-        include: [
-          {
-            model: Team,
-          },
-        ],
-      });
+      const user: any = await User.findOne({ where: { id: req.id } });
 
-      return res.status(200).json({
+      const payload = await user.getTeams({
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+      });
+      return res.json({
         code: 'OK',
-        payload: myTeams,
-        message: `가입된 팀 리스트입니다.`,
+        payload,
+        message: `${req.name}님이 가입한 팀의 썸네일 목록입니다.`,
       });
     } catch (e) {
       console.error(e);
+      next(e);
+    }
+  }
+);
+
+router.get(
+  '/team/lastId/:lastId',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const { lastId: stringLastId } = req.params;
+      const lastId = parseInt(stringLastId, 10);
+
+      let where: any = {};
+      if (lastId !== -1) {
+        where.id = { [Op.lt]: lastId };
+      }
+
+      const user: any = await User.findOne({ where: { id: req.id } });
+
+      const teams = await user.getTeams({
+        where,
+        limit: 15,
+        order: [['createdAt', 'DESC']],
+      });
+
+      if (teams.length === 15) {
+        return res.json({
+          code: 'OK',
+          payload: teams,
+          message: `${req.name}님이 가입한 팀 목록입니다.`,
+        });
+      } else {
+        return res.json({
+          code: 'OK:LAST',
+          payload: teams,
+          message: `${req.name}님이 가입한 마지막 팀 목록입니다.`,
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+);
+
+router.get(
+  '/invitation/:lastId',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const { lastId: stringLastId } = req.params;
+      const lastId = parseInt(stringLastId, 10);
+
+      const invitations = await Invitation.findAll({
+        where:
+          lastId !== -1
+            ? { UserId: req.id, id: { [Op.lt]: lastId }, active: true }
+            : { UserId: req.id, active: true },
+
+        limit: 15,
+        order: [['createdAt', 'DESC']],
+        include: [{ model: Team, attributes: ['id', 'name', 'img'] }],
+      });
+
+      if (invitations.length === 15) {
+        return res.json({
+          code: 'OK',
+          payload: invitations,
+          message: '유저가 받은 초대 목록입니다.',
+        });
+      } else {
+        return res.json({
+          code: 'OK:LAST',
+          payload: invitations,
+          message: `유저가 받은 초대 마지막 목록입니다.`,
+        });
+      }
+    } catch (e) {
+      next(e);
+    }
+  }
+);
+
+router.get(
+  '/application/:lastId',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const { lastId: stringLastId } = req.params;
+      const lastId = parseInt(stringLastId, 10);
+      const applications = await Invitation.findAll({
+        where:
+          lastId !== -1
+            ? { UserId: req.id, id: { [Op.lt]: lastId }, active: false }
+            : { UserId: req.id, active: false },
+        limit: 15,
+        order: [['createdAt', 'DESC']],
+        include: [{ model: Team, attributes: ['id', 'name', 'img'] }],
+      });
+      if (applications.length === 15) {
+        return res.json({
+          code: 'OK',
+          payload: applications,
+          message: '유저가 신청한 팀 목록입니다.',
+        });
+      } else {
+        return res.json({
+          code: 'OK:LAST',
+          payload: applications,
+          message: '유저가 신청한 팀 마지막 목록입니다.',
+        });
+      }
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+);
+router.get(
+  '/invitation/thumbnail/:active',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const { active } = req.params;
+      const invitations = await Invitation.findAll({
+        where: { UserId: req.id, active: active === 'true' ? true : false },
+        limit: 5,
+        order: [['createdAt', 'DESC']],
+        include: [
+          { model: Team, attributes: ['id', 'name', 'img', 'introducing'] },
+        ],
+      });
+
+      return res.json({
+        code: 'OK',
+        payload: invitations,
+        message: active
+          ? '유저가 받은 초대 썸네일 목록 입니다.'
+          : '가입 신청한 팀 썸네일 목록입니다.',
+      });
+    } catch (e) {
+      console.log(e);
       next(e);
     }
   }

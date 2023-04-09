@@ -1,35 +1,31 @@
 import { DataTypes, Model, Sequelize } from 'sequelize';
+import { Team } from './team';
 import { User } from './user';
 
-class Service extends Model {
+class Invitation extends Model {
   [x: string]: any;
-
   static associate() {
     this.belongsTo(User, {
+      onDelete: 'cascade',
+    });
+
+    this.belongsTo(Team, {
       onDelete: 'cascade',
     });
   }
 }
 
-const serviceInit = (sequelize: Sequelize) =>
-  Service.init(
+const invitationInit = (sequelize: Sequelize) =>
+  Invitation.init(
     {
-      tweet: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        unique: false,
-        defaultValue: true,
+      id: {
+        type: DataTypes.INTEGER.UNSIGNED,
+        autoIncrement: true,
+        primaryKey: true,
       },
-      pray: {
+      active: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
-        unique: false,
-        defaultValue: true,
-      },
-      penalty: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false,
-        unique: false,
         defaultValue: true,
       },
     },
@@ -37,12 +33,12 @@ const serviceInit = (sequelize: Sequelize) =>
       sequelize,
       timestamps: true,
       underscored: false,
-      modelName: 'Service',
-      tableName: 'services',
+      modelName: 'Invitation',
+      tableName: 'invitations',
       paranoid: true,
       charset: 'utf8',
       collate: 'utf8_general_ci',
     }
   );
 
-export { Service, serviceInit };
+export { Invitation, invitationInit };

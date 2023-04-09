@@ -5,6 +5,7 @@ import { Service, serviceInit } from './service';
 import { User, userInit } from './user';
 import { Tweet, tweetInit } from './tweet';
 import { Team, teamInit } from './team';
+import { Invitation, invitationInit } from './invitation';
 const env = process.env.NODE_ENV || 'development';
 const config = require('../config/config').default[env];
 
@@ -21,6 +22,7 @@ prayInit(sequelize);
 tweetInit(sequelize);
 serviceInit(sequelize);
 teamInit(sequelize);
+invitationInit(sequelize);
 
 User.associate();
 Pray.associate();
@@ -28,3 +30,4 @@ Service.associate();
 Tweet.associate();
 Penalty.associate();
 Team.associate();
+Invitation.associate();

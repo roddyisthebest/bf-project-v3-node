@@ -47,7 +47,7 @@ router.get(
         });
       } else {
         return res.json({
-          code: 'OK-LAST',
+          code: 'OK:LAST',
           payload: penaltys,
           message: `동아리 번호 ${teamId}의 ${date.thisWeekendToString()} 기간의 마지막 벌금 목록입니다.`,
         });

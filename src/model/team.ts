@@ -52,7 +52,7 @@ const teamInit = (sequelize: Sequelize) => {
         unique: false,
       },
       bossId: {
-        type: DataTypes.STRING,
+        type: DataTypes.INTEGER.UNSIGNED,
         allowNull: true,
         unique: false,
       },

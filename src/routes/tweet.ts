@@ -53,7 +53,7 @@ router.post(
       const img = req.file?.path || ('' as string);
       const { content: pureContent } = req.body;
       const content = sanitizeHtml(pureContent);
-
+      console.log(content);
       let error = false;
 
       if (!(img || content)) {
@@ -87,19 +87,19 @@ router.post(
         },
       });
 
-      if (alreadyTweet) {
-        fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
-        if (error) {
-          return res
-            .status(500)
-            .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });
-        } else {
-          return res.status(406).json({
-            code: 'Forbidden',
-            message: '오늘 업로드 된 게시물이 존재합니다.',
-          });
-        }
-      }
+      // if (alreadyTweet) {
+      //   fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
+      //   if (error) {
+      //     return res
+      //       .status(500)
+      //       .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });
+      //   } else {
+      //     return res.status(406).json({
+      //       code: 'Forbidden',
+      //       message: '오늘 업로드 된 게시물이 존재합니다.',
+      //     });
+      //   }
+      // }
 
       await Tweet.create({
         UserId: req.id,
@@ -123,15 +123,17 @@ router.get(
   '/:lastId/team/:teamId',
   async (req: any, res: Response, next: NextFunction) => {
     try {
-      const where = { id: {}, TeamId: req.params.teamId };
       const lastId = parseInt(req.params.lastId, 10);
+      const teamId = parseInt(req.params.teamId, 10);
+      const where = { id: {}, TeamId: teamId };
 
+      console.log(lastId);
       if (lastId !== -1) {
         where.id = { [Op.lt]: lastId };
       }
 
       const tweets = await Tweet.findAll({
-        where: lastId === -1 ? { TeamId: req.params.teamId } : where,
+        where: lastId === -1 ? { TeamId: teamId } : where,
         limit: 5,
         order: [['createdAt', 'DESC']],
         include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
@@ -144,7 +146,7 @@ router.get(
         });
       } else {
         return res.status(200).json({
-          code: 'OK',
+          code: 'OK:LAST',
           payload: tweets,
           message: `동아리 번호 ${req.params.teamId}의 마지막 트윗 목록 입니다.`,
         });

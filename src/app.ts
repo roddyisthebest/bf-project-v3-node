@@ -9,6 +9,7 @@ import penaltyRoutes from './routes/penalty';
 import tweetRoutes from './routes/tweet';
 import tokenRoutes from './routes/token';
 import teamRoutes from './routes/team';
+import searchRoutes from './routes/search';
 import authToken from './middleware/authToken';
 import authUser from './middleware/authUser';
 const HTTP_PORT = 3000;
@@ -30,11 +31,12 @@ sequelize
   });
 
 app.use('/user', userRoutes);
-app.use('/pray', authToken, authUser, prayRoutes);
-app.use('/penalty', authToken, authUser, penaltyRoutes);
+app.use('/pray', authToken, prayRoutes);
+app.use('/penalty', authToken, penaltyRoutes);
 app.use('/tweet', authToken, tweetRoutes);
 app.use('/token', tokenRoutes);
 app.use('/team', authToken, teamRoutes);
+app.use('/search', authToken, searchRoutes);
 
 app.get('/', (req: any, res: Response, next: NextFunction) => {
   return res.status(200).json({ message: 'test' });
@@ -42,7 +44,7 @@ app.get('/', (req: any, res: Response, next: NextFunction) => {
 
 app.use((req, res, next) => {
   const error = new Error(`${req.method} ${req.url} 라우터가 없습니다.`);
-  console.log('읎다!');
+  console.log('라우터가 없습니다.');
   next(error);
 });
 

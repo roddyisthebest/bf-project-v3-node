@@ -6,13 +6,15 @@ import { Pray } from '../model/pray';
 import sanitizeHtml from 'sanitize-html';
 import { Service } from '../model/service';
 import date from '../util/date';
+import { Team } from '../model/team';
 
 const router = express.Router();
 
 router.get(
-  ':lastId/team/:teamId/weekend/:weekend',
+  '/:lastId/team/:teamId/weekend/:weekend',
   async (req: any, res: Response, next: NextFunction) => {
     const { weekend, teamId } = req.params;
+    console.log('we here');
     const where = { id: {}, TeamId: teamId };
     const lastId = parseInt(req.params.lastId, 10);
     if (lastId !== -1) {
@@ -20,23 +22,17 @@ router.get(
     }
 
     try {
-      const userList = await User.findAll({
-        where: lastId === -1 ? {} : where,
+      // date.thisWeekendToString() === weekend
+
+      let arr: number[] = [];
+      const team: any = await Team.findOne({ where: { id: teamId } });
+
+      const userList = await team.getUsers({
         limit: 5,
-        attributes: ['id', 'img', 'name'],
-        order: [['id', 'DESC']],
-        include: [
-          {
-            model: Service,
-            where: {
-              pray: { [Op.ne]: false },
-              TeamId: teamId,
-            },
-            attributes: [],
-          },
-        ],
+        where: lastId === -1 ? {} : { id: { [Op.lt]: lastId } },
       });
-      const filteredPrayList = [...userList];
+
+      let filteredPrayList = [...userList];
       for (let i = 0; i < userList.length; i++) {
         const prayList = await Pray.findAll({
           where: {
@@ -45,7 +41,25 @@ router.get(
             weekend: { [Op.eq]: weekend },
           },
         });
-        filteredPrayList[i].dataValues.Prays = prayList?.length ? prayList : [];
+        if (date.thisWeekendToString() === weekend) {
+          filteredPrayList[i].dataValues.Prays = prayList?.length
+            ? prayList
+            : [];
+        } else {
+          if (prayList?.length === 0) {
+            arr.push(filteredPrayList[i].id);
+          } else {
+            filteredPrayList[i].dataValues.Prays = prayList?.length
+              ? prayList
+              : [];
+          }
+        }
+      }
+      console.log(arr);
+      for (let i = 0; i < arr.length; i++) {
+        filteredPrayList = filteredPrayList.filter(
+          (filteredPray) => filteredPray.id === arr[i]
+        );
       }
 
       if (filteredPrayList.length === 5) {
@@ -55,9 +69,8 @@ router.get(
           message: `동아리 번호 ${teamId}의 ${weekend} 기간의 기도제목 목록입니다.`,
         });
       } else {
-        console.log(filteredPrayList);
         return res.json({
-          code: 'OK-LAST',
+          code: 'OK:LAST',
           payload: filteredPrayList,
           message: `동아리 번호 ${teamId}의 ${weekend} 기간의 마지막 기도제목 목록입니다.`,
         });
@@ -69,9 +82,8 @@ router.get(
   }
 );
 
-router.post('/', async (req: any, res: Response, next: NextFunction) => {
-  const { content: pureContent, userId, teamId } = req.body;
-  const content = sanitizeHtml(pureContent);
+router.post('', async (req: any, res: Response, next: NextFunction) => {
+  const { teamId, userId } = req.body;
 
   try {
     const user: any = await User.findOne({
@@ -83,7 +95,7 @@ router.post('/', async (req: any, res: Response, next: NextFunction) => {
     if (!user) {
       return res.status(403).json({
         code: 'Forbidden',
-        msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+        message: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
       });
     }
 
@@ -91,7 +103,7 @@ router.post('/', async (req: any, res: Response, next: NextFunction) => {
       UserId: user.id,
       TeamId: teamId,
       weekend: date.thisWeekendToString(),
-      content,
+      content: '',
     });
 
     return res.status(200).json({
@@ -110,13 +122,13 @@ router.post('/', async (req: any, res: Response, next: NextFunction) => {
   }
 });
 
-router.patch('/', async (req: any, res: Response, next: NextFunction) => {
-  const { id, content: pureContent, userId, teamId } = req.body;
+router.patch('', async (req: any, res: Response, next: NextFunction) => {
+  const { id, content: pureContent, teamId } = req.body;
   const content = sanitizeHtml(pureContent);
 
   try {
     const user: any = await User.findOne({
-      where: { id: userId },
+      where: { id: req.id },
       include: [
         { model: Service, where: { pray: { [Op.ne]: false }, TeamId: teamId } },
       ],
@@ -125,13 +137,13 @@ router.patch('/', async (req: any, res: Response, next: NextFunction) => {
     if (!user) {
       return res.status(403).json({
         code: 'Forbidden',
-        msg: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
+        message: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
       });
     }
     await Pray.update({ content }, { where: { id, TeamId: teamId } });
     return res.status(200).send({
       code: 'OK',
-      msg: '유저의 기도제목이 성공적으로 변경되었습니다.',
+      message: '유저의 기도제목이 성공적으로 변경되었습니다.',
     });
   } catch (e) {
     next(e);
@@ -146,7 +158,7 @@ router.delete(
       await Pray.destroy({ where: { id, TeamId: teamId } });
       return res.status(200).json({
         code: 'OK',
-        msg: '해당 기도제목의 삭제가 완료되었습니다!',
+        message: '해당 기도제목의 삭제가 완료되었습니다!',
       });
     } catch (e) {
       console.error(e);

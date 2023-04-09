@@ -15,6 +15,7 @@ export interface UsersAttributes {
   phoneToken: string;
   createdAt?: Date;
   updatedAt?: Date;
+
   [x: string]: any;
 }
 class User extends Model<UsersAttributes> {

@@ -25,6 +25,7 @@ const authToken = async (req: any, res: Response, next: NextFunction) => {
       }
     } else {
       req.id = (user as any).id;
+      req.name = (user as any).name;
       next();
     }
   });
