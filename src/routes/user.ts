@@ -5,7 +5,6 @@ import bcrypt from 'bcrypt';
 import md5 from 'md5';
 import token from '../util/token';
 import authToken from '../middleware/authToken';
-import authUser from '../middleware/authUser';
 import { Service } from '../model/service';
 import { Penalty } from '../model/penalty';
 import date from '../util/date';
@@ -14,6 +13,9 @@ import { Pray } from '../model/pray';
 import { Team } from '../model/team';
 import sanitize from 'sanitize-html';
 import { Invitation } from '../model/invitation';
+import authTeam from '../middleware/authTeam';
+import fs from 'fs';
+
 const router = express.Router();
 
 router.post(
@@ -145,6 +147,7 @@ router.post(
           : `https://s.gravatar.com/avatar/${md5(uid)}?s=32&d=retro`,
         oauth,
       });
+
       const accessToken = token.generateAccessToken(newUser.id, newUser.name);
       const refreshToken = token.generateRefreshToken(newUser.id, newUser.name);
       return res.status(201).json({
@@ -186,23 +189,22 @@ router.patch(
 router.get(
   '/service/team/:teamId',
   authToken,
+  authTeam,
   async (req: any, res: Response, next: NextFunction) => {
-    const { teamId } = req.params;
-
     try {
       const alreadyService = await Service.findOne({
-        where: { TeamId: teamId, UserId: req.id },
+        where: { TeamId: req.team.id, UserId: req.id },
       });
       if (alreadyService) {
         return res.status(200).json({
           code: 'OK',
-          message: `동아리 번호${teamId}의 서비스 사용 설정값 입니다.`,
+          message: `동아리 ${req.team.name}의 서비스 사용 설정값 입니다.`,
           payload: alreadyService,
         });
       }
       return res.status(404).json({
         code: 'Not found',
-        message: `동아리 번호${teamId}의 서비스 사용 설정값이 없습니다.`,
+        message: `동아리 ${req.team.name}의 서비스 사용 설정값이 없습니다.`,
       });
     } catch (e) {
       next(e);
@@ -213,17 +215,16 @@ router.get(
 router.post(
   '/service',
   authToken,
+  authTeam,
   async (req: any, res: Response, next: NextFunction) => {
     const {
       tweet,
       pray,
       penalty,
-      teamId,
-    }: { tweet: boolean; pray: boolean; penalty: boolean; teamId: number } =
-      req.body;
+    }: { tweet: boolean; pray: boolean; penalty: boolean } = req.body;
     try {
       const alreadyService = await Service.findOne({
-        where: { TeamId: teamId, UserId: req.id },
+        where: { TeamId: req.team.id, UserId: req.id },
       });
 
       if (alreadyService) {
@@ -237,11 +238,12 @@ router.post(
         tweet,
         pray,
         penalty,
-        TeamId: teamId,
+        TeamId: req.team.id,
         UserId: req.id,
       });
+
       return res.json({
-        message: `동아리 번호${teamId}의 서비스 사용 설정이 초기화 되었습니다.`,
+        message: `동아리 ${req.team.name}의 서비스 사용 설정이 초기화 되었습니다.`,
         code: 'OK',
       });
     } catch (e) {
@@ -250,10 +252,37 @@ router.post(
   }
 );
 
+router.post(
+  '/phoneToken',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    const { phoneToken } = req.body;
+    console.log('yoyo');
+    try {
+      await User.update(
+        {
+          phoneToken,
+        },
+        { where: { id: req.id } }
+      );
+
+      return res.status(200).json({
+        message: `회원님의 phoneToken 정보를 성공적으로 수정하였습니다.`,
+        code: 'OK',
+      });
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+);
+
 router.patch(
   '/paycheck',
   authToken,
+  authTeam,
   async (req: any, res: Response, next: NextFunction) => {
+    // body에 teamId 넣어야함!
     const { id, payed }: { id: number; payed: boolean } = req.body;
     try {
       await Penalty.update(
@@ -293,18 +322,20 @@ router.patch(
 router.get(
   '/team/:teamId/penaltys/:lastId',
   authToken,
+  authTeam,
   async (req: any, res: Response, next: NextFunction) => {
     try {
-      const { lastId: lstId, teamId } = req.params;
+      const { lastId: lstId } = req.params;
       try {
-        const where = { id: {}, UserId: req.id, TeamId: teamId };
+        const where = { id: {}, UserId: req.id, TeamId: req.team.id };
         const lastId = parseInt(lstId, 10);
         if (lastId && lastId !== -1) {
           where.id = { [Op.lt]: lastId };
         }
 
         const penaltys = await Penalty.findAll({
-          where: lastId === -1 ? { UserId: req.id, TeamId: teamId } : where,
+          where:
+            lastId === -1 ? { UserId: req.id, TeamId: req.team.id } : where,
           limit: 10,
           order: [['id', 'DESC']],
         });
@@ -336,19 +367,20 @@ router.get(
 router.get(
   '/team/:teamId/tweets/:lastId',
   authToken,
+  authTeam,
   async (req: any, res: Response, next: NextFunction) => {
-    const { lastId: lstId, teamId } = req.params;
+    const { lastId: lstId } = req.params;
     const lastId = parseInt(lstId, 10);
 
     try {
-      const where = { id: {}, UserId: req.id, TeamId: teamId };
+      const where = { id: {}, UserId: req.id, TeamId: req.team.id };
       if (lastId !== -1) {
         where.id = { [Op.lt]: lastId };
       }
       console.log(where);
 
       const tweets = await Tweet.findAll({
-        where: lastId === -1 ? { UserId: req.id, TeamId: teamId } : where,
+        where: lastId === -1 ? { UserId: req.id, TeamId: req.team.id } : where,
         limit: 5,
         include: [
           {
@@ -382,17 +414,18 @@ router.get(
 router.get(
   '/team/:teamId/prays/:lastId',
   authToken,
+  authTeam,
   async (req: any, res: Response, next: NextFunction) => {
-    const { lastId: lstId, teamId } = req.params;
+    const { lastId: lstId } = req.params;
     const lastId = parseInt(lstId, 10);
     try {
-      const where = { id: {}, UserId: req.id, TeamId: teamId };
+      const where = { id: {}, UserId: req.id, TeamId: req.team.id };
       if (lastId && lastId !== -1) {
         where.id = { [Op.lt]: lastId };
       }
 
       const prays = await Pray.findAll({
-        where: lastId === -1 ? { UserId: req.id, TeamId: teamId } : where,
+        where: lastId === -1 ? { UserId: req.id, TeamId: req.team.id } : where,
         limit: 15,
         order: [['id', 'DESC']],
       });
@@ -575,6 +608,86 @@ router.get(
         message: active
           ? '유저가 받은 초대 썸네일 목록 입니다.'
           : '가입 신청한 팀 썸네일 목록입니다.',
+      });
+    } catch (e) {
+      console.log(e);
+      next(e);
+    }
+  }
+);
+
+router.delete(
+  '/withdraw',
+  authToken,
+  async (req: any, res: Response, next: NextFunction) => {
+    try {
+      const tweets = await Tweet.findAll({
+        where: { UserId: req.id },
+      });
+
+      const user: any = await User.findOne({ where: { id: req.id } });
+
+      const myteams = await user.getTeams({ where: { bossId: req.id } });
+
+      if (myteams.length !== 0) {
+        return res.status(403).send({
+          code: 'Forbidden',
+          message: `먼저 ${req.name}님이 생성한 팀들을 삭제해주세요.`,
+        });
+      }
+
+      let error = false;
+
+      tweets.map((tweet: any) => {
+        fs.rm(tweet.img.replace('img', 'uploads'), (err) =>
+          err ? (error = true) : console.log('삭제완료')
+        );
+      });
+
+      if (error) {
+        return res
+          .status(500)
+          .json({ message: '서버에러입니다.', code: 'Delete Error' });
+      }
+
+      const teams = await user.getTeams();
+
+      await Promise.all(
+        teams.map(async (team: any) => {
+          await user.removeTeam(team.id);
+          await team.removeUser(req.id);
+        })
+      );
+
+      await Tweet.destroy({
+        where: {
+          UserId: req.id,
+        },
+      });
+
+      await Penalty.destroy({
+        where: {
+          UserId: req.id,
+        },
+      });
+
+      await Pray.destroy({
+        where: {
+          UserId: req.id,
+        },
+      });
+
+      await Service.destroy({
+        where: {
+          UserId: req.id,
+        },
+      });
+
+      await User.destroy({ where: { id: req.id }, force: true, cascade: true });
+
+      return res.status(200).send({
+        code: 'OK',
+        message: '계정이 삭제되었습니다.',
       });
     } catch (e) {
       console.log(e);

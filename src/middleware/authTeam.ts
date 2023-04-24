@@ -4,31 +4,40 @@ import { Team } from '../model/team';
 
 const authTeam = async (req: any, res: Response, next: NextFunction) => {
   try {
-    const { teamId: paramsId } = req.params;
-    const { teamId: bodyId } = req.body;
     let teamId;
-    if (paramsId) {
-      teamId = parseInt(paramsId, 10);
+
+    if (req.params.teamId) {
+      teamId = parseInt(req.params.teamId, 10);
     }
-    if (bodyId) {
-      teamId = parseInt(bodyId);
+    if (req.body.teamId) {
+      teamId = parseInt(req.body.teamId, 10);
     }
 
+    console.log('teamId', teamId);
+
     const team: any = await Team.findOne({ where: { id: teamId } });
+
+    if (team === null) {
+      return res
+        .status(404)
+        .json({ code: 'Not Found:Team', message: '팀이 이미 삭제되었습니다.' });
+    }
+    console.log('req.id', req.id);
 
     const user = await team.getUsers({
       where: { id: req.id },
     });
 
-    if (user) {
+    if (user && user.length !== 0) {
       req.team = team;
       return next();
     }
     return res.status(403).json({
-      code: 'Forbidden',
+      code: 'Forbidden:AuthTeam',
       message: '권한이 없습니다.',
     });
   } catch (e) {
+    console.log(e);
     next(e);
   }
 };

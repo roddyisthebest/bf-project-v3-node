@@ -35,6 +35,7 @@ const teamInit = (sequelize: Sequelize) => {
         type: DataTypes.INTEGER.UNSIGNED,
         autoIncrement: true,
         primaryKey: true,
+        onDelete: 'cascade',
       },
       name: {
         type: DataTypes.STRING,

@@ -14,14 +14,14 @@ export const publicKey = fs.readFileSync(
 const token = {
   generateAccessToken: function (id: number, name: string) {
     const accessToken = jwt.sign({ id, name }, privateKey, {
-      expiresIn: '1 days',
+      expiresIn: '10 days',
       algorithm: 'RS256',
     });
     return accessToken;
   },
   generateRefreshToken: function (id: number, name: string) {
     return jwt.sign({ id, name }, privateKey, {
-      expiresIn: '180 days',
+      expiresIn: '100 days',
       algorithm: 'RS256',
     });
   },

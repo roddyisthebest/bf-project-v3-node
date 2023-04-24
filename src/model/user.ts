@@ -40,6 +40,7 @@ const userInit = (sequelize: Sequelize) => {
         type: DataTypes.INTEGER.UNSIGNED,
         autoIncrement: true,
         primaryKey: true,
+        onDelete: 'cascade',
       },
       uid: {
         type: DataTypes.STRING,

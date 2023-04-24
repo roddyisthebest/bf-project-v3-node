@@ -10,6 +10,7 @@ import { Tweet } from '../model/tweet';
 import userType from '../types/user';
 import { Service } from '../model/service';
 import date from '../util/date';
+import authTeam from '../middleware/authTeam';
 const router = express.Router();
 
 try {
@@ -33,10 +34,10 @@ const upload = multer({
 });
 
 router.post(
-  '',
+  '/team/:teamId',
+  authTeam,
   upload.single('img'),
   async (req: any, res: Response, next: NextFunction) => {
-    const { teamId } = req.body;
     try {
       const user: any = await User.findOne({
         where: { id: req.id },
@@ -44,7 +45,7 @@ router.post(
           {
             model: Service,
             where: {
-              TeamId: teamId,
+              TeamId: req.team.id,
             },
           },
         ],
@@ -63,7 +64,7 @@ router.post(
       }
 
       if (!user.Service.tweet) {
-        fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
+        fs.rm(img, (err) => (err ? (error = true) : (error = false)));
         if (error) {
           console.log('서비스엄슴.');
           return res
@@ -80,30 +81,30 @@ router.post(
       const alreadyTweet = await Tweet.findOne({
         where: {
           UserId: req.id,
-          TeamId: teamId,
+          TeamId: req.team.id,
           createdAt: {
             [Op.between]: [date.startOfToday(), date.endOfToday()],
           },
         },
       });
 
-      // if (alreadyTweet) {
-      //   fs.unlink(img, (err) => (err ? (error = true) : (error = false)));
-      //   if (error) {
-      //     return res
-      //       .status(500)
-      //       .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });
-      //   } else {
-      //     return res.status(406).json({
-      //       code: 'Forbidden',
-      //       message: '오늘 업로드 된 게시물이 존재합니다.',
-      //     });
-      //   }
-      // }
+      if (alreadyTweet) {
+        fs.rm(img, (err) => (err ? (error = true) : (error = false)));
+        if (error) {
+          return res
+            .status(500)
+            .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });
+        } else {
+          return res.status(406).json({
+            code: 'Forbidden',
+            message: '오늘 업로드 된 게시물이 존재합니다.',
+          });
+        }
+      }
 
       await Tweet.create({
         UserId: req.id,
-        TeamId: teamId,
+        TeamId: req.team.id,
         content: content && content,
         img: img && img.replace('uploads', 'img'),
         weekend: date.thisWeekendToString(),
@@ -121,11 +122,11 @@ router.post(
 
 router.get(
   '/:lastId/team/:teamId',
+  authTeam,
   async (req: any, res: Response, next: NextFunction) => {
     try {
       const lastId = parseInt(req.params.lastId, 10);
-      const teamId = parseInt(req.params.teamId, 10);
-      const where = { id: {}, TeamId: teamId };
+      const where = { id: {}, TeamId: req.team.id };
 
       console.log(lastId);
       if (lastId !== -1) {
@@ -133,7 +134,7 @@ router.get(
       }
 
       const tweets = await Tweet.findAll({
-        where: lastId === -1 ? { TeamId: teamId } : where,
+        where: lastId === -1 ? { TeamId: req.team.id } : where,
         limit: 5,
         order: [['createdAt', 'DESC']],
         include: [{ model: User, attributes: ['id', 'name', 'img', 'oauth'] }],
@@ -173,7 +174,7 @@ router.delete('/:id', async (req: any, res: Response, next: NextFunction) => {
     if (req.id === (user.id as number)) {
       await Tweet.destroy({ where: { id } });
       if (tweet.img.length != 0) {
-        fs.unlink(tweet?.img.replace('img', 'uploads'), (err) =>
+        fs.rm(tweet?.img.replace('img', 'uploads'), (err) =>
           err ? (error = true) : console.log('good')
         );
       }
@@ -184,7 +185,9 @@ router.delete('/:id', async (req: any, res: Response, next: NextFunction) => {
           message: '해당 트윗의 삭제가 완료되었습니다!',
         });
       } else {
-        return res.status(404).send({ code: 'Not Found', message: error });
+        return res
+          .status(500)
+          .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });
       }
     } else {
       return res

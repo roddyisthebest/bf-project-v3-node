@@ -9,7 +9,6 @@ const router = express.Router();
 router.get(
   '/teams/:keyword/:lastId',
   async (req: any, res: Response, next: NextFunction) => {
-    console.log(req.params.keyword);
     try {
       const { keyword, lastId: stringLastId } = req.params;
       const pureKeyword = sanitize(keyword);

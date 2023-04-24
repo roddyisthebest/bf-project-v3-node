@@ -11,13 +11,22 @@ import tokenRoutes from './routes/token';
 import teamRoutes from './routes/team';
 import searchRoutes from './routes/search';
 import authToken from './middleware/authToken';
-import authUser from './middleware/authUser';
-const HTTP_PORT = 3000;
+import { settingPenalty, givingWarning } from './util/func';
+import admin from 'firebase-admin';
+const HTTP_PORT = 4000;
 const HTTPS_PORT = 443;
 
 const app = express();
 
 dotenv.config();
+
+process.env.GOOGLE_APPLICATION_CREDENTIALS =
+  'src/bf-project-v3-firebase-adminsdk-vikyp-ed16b4f5cf.json';
+
+admin.initializeApp({
+  credential: admin.credential.cert(process.env.GOOGLE_APPLICATION_CREDENTIALS),
+  databaseURL: 'https://bf-project-v3.firebaseio.com',
+});
 
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(express.json());
@@ -30,6 +39,8 @@ sequelize
     console.log(err);
   });
 
+settingPenalty();
+givingWarning();
 app.use('/user', userRoutes);
 app.use('/pray', authToken, prayRoutes);
 app.use('/penalty', authToken, penaltyRoutes);
@@ -53,7 +64,12 @@ app.use((err: Error, req: any, res: Response, next: NextFunction) => {
   res.locals.error = process.env.NODE_ENV !== 'prod' ? err : {};
   res.status(500);
   console.log('error');
-  res.json({ err });
+  console.log(err.message, 'File too large');
+  console.log(err.message === 'File too large');
+  if (err.message === 'File too large') {
+    return res.status(413).json({ code: 413, message: err.message });
+  }
+  res.json({ code: 500, message: err.message });
 });
 
 if (process.env.NODE_ENV === 'production') {

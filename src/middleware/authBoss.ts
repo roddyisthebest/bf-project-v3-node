@@ -1,13 +1,13 @@
 import { Response, NextFunction, Request } from 'express';
 
 const authBoss = async (req: any, res: Response, next: NextFunction) => {
-  if (req.id === req.team.bossId) {
+  if (req.id !== parseInt(req.team.bossId, 10)) {
     return res.status(403).json({
-      code: 'Forbidden',
+      code: 'Forbidden:AuthBoss',
       message: '팀에대한 권한이 없습니다.',
     });
   }
-  next();
+  return next();
 };
 
 export default authBoss;
