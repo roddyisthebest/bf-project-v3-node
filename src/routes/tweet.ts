@@ -14,15 +14,15 @@ import authTeam from '../middleware/authTeam';
 const router = express.Router();
 
 try {
-  fs.readdirSync('src/uploads');
+  fs.readdirSync('uploads');
 } catch (error) {
-  fs.mkdirSync('src/uploads');
+  fs.mkdirSync('uploads');
 }
 
 const upload = multer({
   storage: multer.diskStorage({
     destination(req, file, cb) {
-      cb(null, `src/uploads`);
+      cb(null, `uploads`);
     },
     filename(req, file, cb) {
       console.log(file);
@@ -106,7 +106,7 @@ router.post(
         UserId: req.id,
         TeamId: req.team.id,
         content: content && content,
-        img: img && img.replace('uploads', 'img'),
+        img: img && img.replace('uploads', 'src/img'),
         weekend: date.thisWeekendToString(),
       });
 
@@ -180,7 +180,7 @@ router.delete('/:id', async (req: any, res: Response, next: NextFunction) => {
     if (req.id === (user.id as number)) {
       await Tweet.destroy({ where: { id } });
       if (tweet.img.length != 0) {
-        fs.rm(tweet?.img.replace('img', 'uploads'), (err) =>
+        fs.rm(tweet?.img.replace('src/img', 'uploads'), (err) =>
           err ? (error = true) : console.log('good')
         );
       }

@@ -31,7 +31,7 @@ admin.initializeApp({
 app.use(cors({ credentials: true, origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/src/img', express.static(path.join(__dirname, 'uploads')));
+app.use('/src/img', express.static(path.join('uploads')));
 sequelize
   .sync({ force: false })
   .then(() => console.log('데이터 베이스 연결 성공했다리요!'))

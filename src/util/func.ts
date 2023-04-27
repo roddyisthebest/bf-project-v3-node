@@ -134,7 +134,7 @@ const settingPenalty = () =>
               if (tweet.img.length === 0) {
                 return;
               }
-              fs.rm(tweet.img.replace('img', 'uploads'), (err) =>
+              fs.rm(tweet.img.replace('img', 'src/uploads'), (err) =>
                 err
                   ? console.log('사진 삭제 에러입니다.')
                   : console.log('사진이 성공적으로 삭제')

@@ -639,7 +639,7 @@ router.delete(
       let error = false;
 
       tweets.map((tweet: any) => {
-        fs.rm(tweet.img.replace('img', 'uploads'), (err) =>
+        fs.rm(tweet.img.replace('img', 'src/uploads'), (err) =>
           err ? (error = true) : console.log('삭제완료')
         );
       });

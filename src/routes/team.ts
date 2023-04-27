@@ -22,7 +22,7 @@ const router = express.Router();
 const upload = multer({
   storage: multer.diskStorage({
     destination(req, file, cb) {
-      cb(null, `src/uploads`);
+      cb(null, `uploads`);
     },
     filename(req, file, cb) {
       console.log(file);
@@ -126,7 +126,7 @@ router.post(
   async (req: any, res: Response, next: NextFunction) => {
     try {
       const { name, introducing } = req.body;
-
+      console.log(name, introducing);
       const img = req.file?.path || ('' as string);
       console.log(name, introducing, img);
       if (!img) {
@@ -158,19 +158,20 @@ router.post(
         UserId: req.id,
         bossId: req.id,
         name,
-        img: img && img.replace('uploads', 'img'),
+        img: img && img.replace('uploads', 'src/img'),
         introducing,
       });
 
       await user.addTeam(parseInt(team.id, 10));
 
+      console.log(img, 'img');
       return res.status(201).json({
         code: 'Created',
         message: `성공적으로 팀 ${name}이 생성되었습니다.`,
         payload: {
           bossId: req.id,
           name,
-          img: img && img.replace('uploads', 'img'),
+          img: img && img.replace('uploads', 'src/img'),
           introducing,
         },
       });
@@ -606,7 +607,7 @@ router.put(
     try {
       let error = false;
       if (img.length !== 0) {
-        fs.rm(req.team.img.replace('img', 'uploads'), (err) =>
+        fs.rm(req.team.img.replace('src/img', 'uploads'), (err) =>
           err ? (error = true) : console.log('삭제완료')
         );
 
@@ -616,7 +617,7 @@ router.put(
             .json({ message: '서버에러입니다.', code: 'Delete Error' });
         }
         await Team.update(
-          { introducing, name, img: img.replace('uploads', 'img') },
+          { introducing, name, img: img.replace('uploads', 'src/img') },
           { where: { id: req.team.id } }
         );
         return res.status(200).send({
@@ -651,14 +652,14 @@ router.delete(
 
       let error = false;
       tweets.map((tweet: any) => {
-        fs.rm(tweet.img.replace('img', 'uploads'), (err) =>
+        fs.rm(tweet.img.replace('src/img', 'uploads'), (err) =>
           err ? (error = true) : console.log('삭제완료')
         );
       });
 
       let teamImageError = false;
 
-      fs.rm(req.team.img.replace('img', 'uploads'), (err) =>
+      fs.rm(req.team.img.replace('src/img', 'uploads'), (err) =>
         err ? (teamImageError = true) : (teamImageError = false)
       );
 
@@ -841,7 +842,7 @@ router.delete(
 
       let error = false;
       tweets.map((tweet: any) => {
-        fs.rm(tweet.img.replace('img', 'uploads'), (err) =>
+        fs.rm(tweet.img.replace('src/img', 'uploads'), (err) =>
           err ? (error = true) : console.log('삭제완료')
         );
       });
@@ -931,7 +932,7 @@ router.delete(
       });
       let error = false;
       tweets.map((tweet: any) => {
-        fs.rm(tweet.img.replace('img', 'uploads'), (err) =>
+        fs.rm(tweet.img.replace('src/img', 'uploads'), (err) =>
           err ? (error = true) : console.log('삭제완료')
         );
       });
