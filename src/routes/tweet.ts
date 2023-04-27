@@ -167,6 +167,12 @@ router.delete('/:id', async (req: any, res: Response, next: NextFunction) => {
       include: [{ model: User, attributes: ['id'] }],
     });
 
+    if (!tweet) {
+      return res.status(404).json({
+        code: 'Not Found',
+        message: '삭제되었거나 없는 게시글입니다.',
+      });
+    }
     const user: userType = tweet?.User;
 
     var error = false;

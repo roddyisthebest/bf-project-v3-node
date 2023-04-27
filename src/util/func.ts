@@ -9,7 +9,7 @@ import moment from 'moment';
 import { Penalty } from '../model/penalty';
 import fs from 'fs';
 const givingWarning = () =>
-  schedule.scheduleJob('0 30 18 * * *', async function () {
+  schedule.scheduleJob('0 30 23 * * *', async function () {
     try {
       if (date.isItSunday()) {
         return;
@@ -73,7 +73,7 @@ const givingWarning = () =>
   });
 
 const settingPenalty = () =>
-  schedule.scheduleJob('0 9 18 * * THU', async function () {
+  schedule.scheduleJob('0 0 0 * * SUN', async function () {
     try {
       const yesterday = moment().subtract(1, 'day').format('YYYY-MM-DD');
       const lastWeekend = moment(yesterday).day(0).format('YYYY-MM-DD');

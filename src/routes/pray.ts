@@ -165,6 +165,14 @@ router.patch(
           message: '회원님은 기도제목 서비스를 이용하지 않으셨습니다.',
         });
       }
+
+      const pray = await Pray.findOne({ where: { id } });
+      if (!pray) {
+        return res.status(404).json({
+          code: 'Not Found',
+          message: '삭제되었거나 없는 기도제목입니다.',
+        });
+      }
       await Pray.update({ content }, { where: { id, TeamId: req.team.id } });
       return res.status(200).send({
         code: 'OK',
@@ -235,6 +243,13 @@ router.delete(
   async (req: any, res: Response, next: NextFunction) => {
     const { id } = req.params;
     try {
+      const pray = await Pray.findOne({ where: { id } });
+      if (!pray) {
+        return res.status(404).json({
+          code: 'Not Found',
+          message: '삭제되었거나 없는 기도제목입니다.',
+        });
+      }
       await Pray.destroy({ where: { id, TeamId: req.team.id } });
       return res.status(200).json({
         code: 'OK',
