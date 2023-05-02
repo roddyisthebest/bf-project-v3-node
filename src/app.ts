@@ -10,7 +10,9 @@ import tweetRoutes from './routes/tweet';
 import tokenRoutes from './routes/token';
 import teamRoutes from './routes/team';
 import searchRoutes from './routes/search';
+import reportRoutes from './routes/report';
 import authToken from './middleware/authToken';
+
 import { settingPenalty, givingWarning } from './util/func';
 import admin from 'firebase-admin';
 const HTTP_PORT = 4000;
@@ -42,6 +44,7 @@ sequelize
 settingPenalty();
 givingWarning();
 app.use('/user', userRoutes);
+app.use('/report', authToken, reportRoutes);
 app.use('/pray', authToken, prayRoutes);
 app.use('/penalty', authToken, penaltyRoutes);
 app.use('/tweet', authToken, tweetRoutes);

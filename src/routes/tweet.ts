@@ -88,19 +88,19 @@ router.post(
         },
       });
 
-      if (alreadyTweet) {
-        fs.rm(img, (err) => (err ? (error = true) : (error = false)));
-        if (error) {
-          return res
-            .status(500)
-            .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });
-        } else {
-          return res.status(406).json({
-            code: 'Forbidden',
-            message: '오늘 업로드 된 게시물이 존재합니다.',
-          });
-        }
-      }
+      // if (alreadyTweet) {
+      //   fs.rm(img, (err) => (err ? (error = true) : (error = false)));
+      //   if (error) {
+      //     return res
+      //       .status(500)
+      //       .json({ code: 'Bad Gateway', message: '파일 삭제 오류입니다.' });
+      //   } else {
+      //     return res.status(406).json({
+      //       code: 'Forbidden',
+      //       message: '오늘 업로드 된 게시물이 존재합니다.',
+      //     });
+      //   }
+      // }
 
       await Tweet.create({
         UserId: req.id,

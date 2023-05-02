@@ -72,6 +72,12 @@ const userInit = (sequelize: Sequelize) => {
         allowNull: true,
         unique: false,
       },
+      admin: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        unique: false,
+        defaultValue: false,
+      },
     },
     {
       sequelize,
