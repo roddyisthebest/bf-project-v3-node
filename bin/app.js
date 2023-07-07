@@ -34,7 +34,7 @@ app.use(express_1.default.json());
 app.use(express_1.default.static(path_1.default.join(__dirname, 'public')));
 app.use('/src/img', express_1.default.static(path_1.default.join('uploads')));
 model_1.sequelize
-    .sync({ force: false })
+    .sync({ force: false, alter: true })
     .then(() => console.log('데이터 베이스 연결 성공했다리요!'))
     .catch((err) => {
     console.log(err);
