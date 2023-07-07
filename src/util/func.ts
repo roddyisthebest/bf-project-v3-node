@@ -125,24 +125,6 @@ const settingPenalty = () =>
             payed: pay === 0,
           });
 
-          if (
-            date.weekOfMonth(date.thisWeekendToString()) === 2 ||
-            date.weekOfMonth(date.thisWeekendToString()) === 4
-          ) {
-            const tweets = await Tweet.findAll();
-            tweets.map((tweet: any) => {
-              if (tweet.img.length === 0) {
-                return;
-              }
-              fs.rm(tweet.img.replace('img', 'src/uploads'), (err) =>
-                err
-                  ? console.log('사진 삭제 에러입니다.')
-                  : console.log('사진이 성공적으로 삭제')
-              );
-            });
-            await Tweet.destroy({ where: {}, truncate: true });
-          }
-
           if (user.phoneToken.length !== 0) {
             await admin.messaging().send({
               data: {
@@ -173,6 +155,24 @@ const settingPenalty = () =>
             });
           }
         });
+
+        // if (
+        //   date.weekOfMonth(date.thisWeekendToString()) === 2 ||
+        //   date.weekOfMonth(date.thisWeekendToString()) === 4
+        // ) {
+        //   const tweets = await Tweet.findAll();
+        //   tweets.map((tweet: any) => {
+        //     if (tweet.img.length === 0) {
+        //       return;
+        //     }
+        //     fs.rm(tweet.img.replace('img', 'src/uploads'), (err) =>
+        //       err
+        //         ? console.log('사진 삭제 에러입니다.')
+        //         : console.log('사진이 성공적으로 삭제')
+        //     );
+        //   });
+        //   await Tweet.destroy({ where: {}, truncate: true });
+        // }
       });
     } catch (e) {
       console.log(e);
